@@ -32,8 +32,10 @@ bpr_orchestrator/
   agents/
     base.py          Anthropic API を呼ぶ専門エージェントの基底クラス
     mock_agents.py   API 不要でオーケストレーションを一気通貫で検証できる決定論的スタブ
+    bpmn_agent.py    Camunda Modeler対応 BPMN 2.0 XML生成エージェント（CamundaBPMNAgent）と
+                      その出力を機械的に検証する validate_bpmn_xml()
 examples/run_demo.py DISCOVER〜SCALE までの全フェーズを一気通貫で動かすデモ
-tests/               gates / state_machine / redesign / orchestrator の単体テスト
+tests/               gates / state_machine / redesign / orchestrator / bpmn_agent の単体テスト
 ```
 
 ## 設計原則との対応
@@ -61,6 +63,35 @@ tests/               gates / state_machine / redesign / orchestrator の単体�
   Adoption 不足・対象範囲不足・原因仮説誤り・例外率増加・データ誤認といった
   再調査候補を提示します。Gate 7（Scale）も「測定さえされていればよい」ではなく、
   baseline からの改善が期待値の 50% 以上実現しているかを確認します。
+
+## BPMN 生成エージェント（Camunda Modeler対応）
+
+`agents/bpmn_agent.py` は、業務説明から Camunda Modeler で開ける BPMN 2.0 XML を生成する
+専門エージェントです。他のエージェントと異なり、出力そのもの（生XML）が成果物なので、
+`AgentResponse` には JSON ではなく `artifact` / `artifact_type="bpmn_xml"` フィールドで
+XML を格納します（`contracts.AgentResponse` に追加済み）。
+
+このエージェントのプロンプトは「出力前に自己検証する」という内部ルールを持ちますが、
+LLM の自己申告は信用しません。`validate_bpmn_xml()` が以下を **プログラムで機械的に**
+再検証し、通らなければ 1 回だけ具体的な指摘つきで再生成を要求します（それでも失敗すれば
+例外を投げ、Orchestrator に壊れた XML を渡しません）。
+
+- スマートクォート・不可視/ゼロ幅文字の混入なし
+- 整形式XML（`xml.etree.ElementTree` でパース可能）かつ `BPMNDI` あり
+- ID の一意性・命名規則（英数字+アンダースコア、数字始まり禁止）
+- `sourceRef`/`targetRef` の参照整合性、`incoming`/`outgoing` タグの完全対応
+- 孤立ノードなし、`default` Flow に `conditionExpression` が付いていないこと
+
+`MockCamundaBPMNAgent` は API キー不要の決定論的スタブで、デモ・テストで
+`CamundaBPMNAgent`（実際に Claude API を呼ぶ本番実装）の代わりに使えます。
+
+```python
+from bpr_orchestrator.agents.bpmn_agent import CamundaBPMNAgent  # ANTHROPIC_API_KEY が必要
+
+orch.agents["bpmn_agent"] = CamundaBPMNAgent()
+response = orch.dispatch("bpmn_agent", "To-Beプロセスを図示して")
+xml = response.artifact  # Camunda Modeler にそのまま読み込める BPMN 2.0 XML
+```
 
 ## 実行方法
 

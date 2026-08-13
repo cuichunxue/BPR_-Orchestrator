@@ -4,6 +4,7 @@ Run with: python -m examples.run_demo
 """
 from __future__ import annotations
 
+from bpr_orchestrator.agents.bpmn_agent import MockCamundaBPMNAgent, validate_bpmn_xml
 from bpr_orchestrator.agents.mock_agents import (
     MockAutomationAgent,
     MockDataAgent,
@@ -35,6 +36,7 @@ def main() -> None:
         "data_agent": MockDataAgent(),
         "root_cause_agent": MockRootCauseAgent(),
         "automation_agent": MockAutomationAgent(),
+        "bpmn_agent": MockCamundaBPMNAgent(),
     }
     orch = BPROrchestrator(case, agents)
 
@@ -96,6 +98,15 @@ def main() -> None:
         evidence_basis=list(case.evidence.keys()),
     )
     initiative_id = orch.propose_initiative(initiative).initiative_id
+
+    section("Visualize the To-Be process (BPMN agent)")
+    bpmn_response = orch.dispatch(
+        "bpmn_agent",
+        "single risk-based approval step for orders under threshold, with a "
+        "correction/re-check loop back to the review task",
+    )
+    print(f"artifact_type={bpmn_response.artifact_type} "
+          f"valid={validate_bpmn_xml(bpmn_response.artifact).ok}")
     print(orch.advance_phase())  # REDESIGN -> EVALUATE
 
     section("EVALUATE: gates + opportunity score")

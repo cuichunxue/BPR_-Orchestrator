@@ -37,6 +37,8 @@ class AgentResponse(BaseModel):
     risks: list[str] = Field(default_factory=list)
     recommended_next_action: str = ""
     human_decision_required: bool = False
+    artifact: Optional[str] = None        # non-JSON payload, e.g. generated BPMN XML
+    artifact_type: Optional[str] = None   # e.g. "bpmn_xml"
 
     def is_well_formed(self) -> tuple[bool, list[str]]:
         """Reject vague, under-specified findings before they ever reach
