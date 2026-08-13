@@ -1,0 +1,22 @@
+[project]
+name = "bpr-orchestrator"
+version = "0.1.0"
+description = "BPR Orchestrator — a Transformation Brain that dispatches to specialized agents and enforces Evidence, Gate, and Human-in-the-loop discipline across a business-process-reengineering engagement."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+dev = ["pytest>=7.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["bpr_orchestrator*"]
