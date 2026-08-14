@@ -21,6 +21,7 @@ from bpr_orchestrator.memory import EnterpriseMemory, GeneralPatternLibrary
 from bpr_orchestrator.models import (
     ConfidenceState,
     Decision,
+    DesignArtifact,
     HUMAN_ONLY_DOMAINS,
     Hypothesis,
     Initiative,
@@ -111,10 +112,10 @@ class BPROrchestrator:
             **task_kwargs,
         )
         response = agent.run(task, self.case)
-        self._integrate_response(response)
+        self._integrate_response(response, task)
         return response
 
-    def _integrate_response(self, response: AgentResponse) -> None:
+    def _integrate_response(self, response: AgentResponse, task: AgentTask) -> None:
         well_formed, problems = response.is_well_formed()
         if not well_formed:
             raise OrchestratorError(
@@ -122,6 +123,17 @@ class BPROrchestrator:
             )
         if response.contradictions:
             self.case.contradictions.extend(response.contradictions)
+        if response.artifact is not None:
+            self.case.add(
+                DesignArtifact(
+                    artifact_type=response.artifact_type or "unknown",
+                    content=response.artifact,
+                    phase=self.case.phase,
+                    source_agent=response.agent,
+                    problem_id=task.problem_id,
+                    initiative_id=task.initiative_id,
+                )
+            )
 
     # -- Next Best Investigation (design section 12) ---------------------
 

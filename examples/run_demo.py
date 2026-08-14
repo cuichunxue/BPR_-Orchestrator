@@ -104,9 +104,16 @@ def main() -> None:
         "bpmn_agent",
         "single risk-based approval step for orders under threshold, with a "
         "correction/re-check loop back to the review task",
+        problem_id=problem_id,
+        initiative_id=initiative_id,
     )
     print(f"artifact_type={bpmn_response.artifact_type} "
           f"valid={validate_bpmn_xml(bpmn_response.artifact).ok}")
+    # the artifact isn't just returned — it's persisted on the Case, tagged
+    # with the phase/problem/initiative it was produced for, same as Evidence
+    artifact_id, artifact = next(iter(case.design_artifacts.items()))
+    print(f"stored as {artifact_id}: phase={artifact.phase.value} "
+          f"initiative_id={artifact.initiative_id}")
     print(orch.advance_phase())  # REDESIGN -> EVALUATE
 
     section("EVALUATE: gates + opportunity score")

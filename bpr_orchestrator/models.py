@@ -252,6 +252,21 @@ class Learning(BaseModel):
     follow_up_action: str = ""
 
 
+class DesignArtifact(BaseModel):
+    """A non-JSON artifact an agent produced (e.g. generated BPMN XML).
+    Kept in the Case alongside Evidence/Decisions so a diagram is
+    traceable to the problem/initiative and phase it was produced for,
+    instead of only existing in the AgentResponse that returned it."""
+
+    artifact_id: str = Field(default_factory=lambda: _id("art"))
+    artifact_type: str
+    content: str
+    phase: Phase
+    source_agent: str = ""
+    problem_id: Optional[str] = None
+    initiative_id: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Aggregate: the Transformation Case
 # ---------------------------------------------------------------------------
@@ -278,6 +293,7 @@ class TransformationCase(BaseModel):
     decisions: dict[str, Decision] = Field(default_factory=dict)
     kpis: dict[str, KPIRecord] = Field(default_factory=dict)
     learnings: dict[str, Learning] = Field(default_factory=dict)
+    design_artifacts: dict[str, DesignArtifact] = Field(default_factory=dict)
 
     contradictions: list[str] = Field(default_factory=list)
     phase_history: list[Phase] = Field(default_factory=lambda: [Phase.DISCOVER])
@@ -309,4 +325,7 @@ class TransformationCase(BaseModel):
         if isinstance(obj, Learning):
             self.learnings[obj.learning_id] = obj
             return obj.learning_id
+        if isinstance(obj, DesignArtifact):
+            self.design_artifacts[obj.artifact_id] = obj
+            return obj.artifact_id
         raise TypeError(f"Unsupported object type: {type(obj)!r}")

@@ -4,6 +4,7 @@ a business-process-reengineering engagement."""
 
 from bpr_orchestrator.models import (
     Decision,
+    DesignArtifact,
     Evidence,
     Hypothesis,
     Initiative,
@@ -27,5 +28,6 @@ __all__ = [
     "Decision",
     "KPIRecord",
     "Learning",
+    "DesignArtifact",
     "Phase",
 ]

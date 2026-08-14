@@ -89,9 +89,19 @@ LLM の自己申告は信用しません。`validate_bpmn_xml()` が以下を **
 from bpr_orchestrator.agents.bpmn_agent import CamundaBPMNAgent  # ANTHROPIC_API_KEY が必要
 
 orch.agents["bpmn_agent"] = CamundaBPMNAgent()
-response = orch.dispatch("bpmn_agent", "To-Beプロセスを図示して")
+response = orch.dispatch(
+    "bpmn_agent", "To-Beプロセスを図示して",
+    problem_id=problem_id, initiative_id=initiative_id,
+)
 xml = response.artifact  # Camunda Modeler にそのまま読み込める BPMN 2.0 XML
 ```
+
+生成された XML は呼び出し元が受け取るだけでなく、Evidence や Decision と同じように
+`case.design_artifacts`（`DesignArtifact`：artifact_type / content / phase / problem_id /
+initiative_id / source_agent を保持）へ自動的に永続化されます。`dispatch()` に
+`problem_id=`/`initiative_id=` を渡しておけば、「どの Problem・どの Initiative の
+Redesign 時点で生成された図か」を後から追跡できます（1 回の dispatch につき 1 件追加、
+上書きはされません）。
 
 ## 実行方法
 

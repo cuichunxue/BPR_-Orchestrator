@@ -23,6 +23,7 @@ class AgentTask(BaseModel):
     instruction: str
     problem_id: Optional[str] = None
     hypothesis_id: Optional[str] = None
+    initiative_id: Optional[str] = None
     context: dict = Field(default_factory=dict)
 
 
